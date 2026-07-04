@@ -1,3 +1,4 @@
 cmd/carapace-spec-argparse/carapace-spec-argparse
 dist
 profile.cov
+__pycache__/

@@ -6,7 +6,9 @@ package argparse
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/carapace-sh/carapace-spec/pkg/command"
@@ -95,6 +97,17 @@ func (a Argument) ToFlag() command.Flag {
 	switch a.Nargs {
 	case "*", "+", "-1":
 		f.Nargs = -1
+	case "?":
+		f.Optarg = true
+		f.Value = true
+	default:
+		if n, err := strconv.Atoi(a.Nargs); err == nil && n > 0 {
+			f.Nargs = n
+		}
+	}
+
+	if a.Default != nil && !a.IsBool {
+		f.Default = fmt.Sprint(a.Default)
 	}
 
 	return f
@@ -112,10 +125,12 @@ func (s Spec) ToSpecCommand() command.Command {
 	tree := buildCommandTree(s.Commands, s.Groups)
 
 	for name, flat := range s.Commands {
-		if name == "" || !strings.Contains(name, " ") {
-			if name == s.Cli.Name || name == "" {
-				addFlagsToCommand(&root, flat.Arguments)
+		if name == "" {
+			if flat.Description != "" {
+				root.Description = firstSentence(flat.Description)
+				root.Documentation.Command = flat.Description
 			}
+			addFlagsToCommand(&root, flat.Arguments)
 		}
 	}
 
@@ -161,6 +176,9 @@ func buildCommandTree(commands map[string]FlatCmd, groups map[string]GroupInfo) 
 	}
 
 	for name, flat := range commands {
+		if name == "" {
+			continue
+		}
 		parts := strings.Split(name, " ")
 		node := root
 		for _, part := range parts {
@@ -172,7 +190,9 @@ func buildCommandTree(commands map[string]FlatCmd, groups map[string]GroupInfo) 
 			}
 			node = child
 		}
-		node.description = flat.Description
+		if flat.Description != "" {
+			node.description = flat.Description
+		}
 		node.flags = flat.Arguments
 	}
 
@@ -190,6 +210,7 @@ func convertNodes(node *commandNode) []command.Command {
 		}
 		cmd.Completion.Flag = make(map[string][]string)
 		cmd.Documentation.Flag = make(map[string]string)
+		cmd.Documentation.Command = child.description
 		addFlagsToCommand(&cmd, child.flags)
 
 		if len(child.children) > 0 {

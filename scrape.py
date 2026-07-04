@@ -37,8 +37,6 @@ def _nargs_value(nargs) -> Optional[str]:
     """Normalize argparse nargs to a JSON-serializable value."""
     if nargs is None:
         return None
-    if isinstance(nargs, int):
-        return str(nargs)
     return str(nargs)
 
 
@@ -113,14 +111,11 @@ def _walk_parser(parser, path: str = "") -> Dict[str, Any]:
 
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
-            for choice_action in action._choices_actions:
-                name = choice_action.dest
-                subparser = action.choices.get(name)
-                if subparser is None:
-                    continue
+            help_lookup = {ca.dest: ca.help or "" for ca in action._choices_actions}
+            for name, subparser in action.choices.items():
                 sub_path = f"{path} {name}".strip()
                 sub_result = _walk_parser(subparser, sub_path)
-                sub_result["help"] = choice_action.help or ""
+                sub_result["help"] = help_lookup.get(name, "")
                 commands[name] = sub_result
         elif action.option_strings:
             flags.append(_action_to_argument(action))
@@ -187,14 +182,14 @@ def _flatten_commands(
                 "group": prefix.split()[0] if prefix else "",
             }
 
-    if prefix and node.get("flags"):
+    if node.get("flags") or (not prefix and node.get("description")):
         if prefix not in commands:
             commands[prefix] = {
                 "description": node.get("help", node.get("description", "")),
                 "arguments": node.get("flags", []),
                 "group": prefix.split()[0] if " " in prefix else "",
             }
-        else:
+        elif node.get("flags"):
             commands[prefix]["arguments"] = node.get("flags", [])
 
 
@@ -243,13 +238,7 @@ def _create_az_cli_ctx(cli_name: str):
     """Create an Azure CLI context for command loading."""
     from knack.cli import CLI
 
-    cli = CLI(cli_name=cli_name, config_dir="/tmp/.{}".format(cli_name))
-
-    class DummyModule:
-        def __init__(self):
-            self.cli_ctx = cli
-
-    return cli
+    return CLI(cli_name=cli_name, config_dir="/tmp/.{}".format(cli_name))
 
 
 def _knack_to_json(cli_name, command_table, command_group_specs) -> Dict[str, Any]:
@@ -291,7 +280,7 @@ def _knack_to_json(cli_name, command_table, command_group_specs) -> Dict[str, An
                     "nargs": nargs_val,
                     "default": _serialize_default(arg_def.default),
                     "metavar": arg_def.metavar if isinstance(arg_def.metavar, str) else None,
-                    "is_bool": arg_type is not None and getattr(arg_type, "__name__", "") == "bool",
+                    "is_bool": False,
                 }
             )
 
@@ -325,7 +314,6 @@ def _get_cli_version(cli_name: str) -> str:
 
             cli = get_default_cli()
             return cli.version
-        import importlib
 
         mod = importlib.import_module(cli_name)
         return getattr(mod, "__version__", "")
@@ -341,8 +329,6 @@ def auto_detect_method(import_spec: Optional[str]) -> str:
         return "knack"
     except ImportError:
         pass
-    if import_spec:
-        return "argparse"
     return "argparse"
 
 

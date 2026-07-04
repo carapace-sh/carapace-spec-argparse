@@ -1,7 +1,15 @@
 package main
 
-import "github.com/carapace-sh/carapace-spec-argparse/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/carapace-sh/carapace-spec-argparse/cmd"
+)
 
 func main() {
-	_ = cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
