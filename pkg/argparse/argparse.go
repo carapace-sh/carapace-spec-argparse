@@ -125,10 +125,12 @@ func (s Spec) ToSpecCommand() command.Command {
 	tree := buildCommandTree(s.Commands, s.Groups)
 
 	for name, flat := range s.Commands {
-		if name == "" || !strings.Contains(name, " ") {
-			if name == s.Cli.Name || name == "" {
-				addFlagsToCommand(&root, flat.Arguments)
+		if name == "" {
+			if flat.Description != "" {
+				root.Description = firstSentence(flat.Description)
+				root.Documentation.Command = flat.Description
 			}
+			addFlagsToCommand(&root, flat.Arguments)
 		}
 	}
 
@@ -206,6 +208,7 @@ func convertNodes(node *commandNode) []command.Command {
 		}
 		cmd.Completion.Flag = make(map[string][]string)
 		cmd.Documentation.Flag = make(map[string]string)
+		cmd.Documentation.Command = child.description
 		addFlagsToCommand(&cmd, child.flags)
 
 		if len(child.children) > 0 {

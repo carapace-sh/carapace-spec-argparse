@@ -187,14 +187,14 @@ def _flatten_commands(
                 "group": prefix.split()[0] if prefix else "",
             }
 
-    if node.get("flags"):
+    if node.get("flags") or (not prefix and node.get("description")):
         if prefix not in commands:
             commands[prefix] = {
                 "description": node.get("help", node.get("description", "")),
                 "arguments": node.get("flags", []),
                 "group": prefix.split()[0] if " " in prefix else "",
             }
-        else:
+        elif node.get("flags"):
             commands[prefix]["arguments"] = node.get("flags", [])
 
 
@@ -243,13 +243,7 @@ def _create_az_cli_ctx(cli_name: str):
     """Create an Azure CLI context for command loading."""
     from knack.cli import CLI
 
-    cli = CLI(cli_name=cli_name, config_dir="/tmp/.{}".format(cli_name))
-
-    class DummyModule:
-        def __init__(self):
-            self.cli_ctx = cli
-
-    return cli
+    return CLI(cli_name=cli_name, config_dir="/tmp/.{}".format(cli_name))
 
 
 def _knack_to_json(cli_name, command_table, command_group_specs) -> Dict[str, Any]:
@@ -291,7 +285,7 @@ def _knack_to_json(cli_name, command_table, command_group_specs) -> Dict[str, An
                     "nargs": nargs_val,
                     "default": _serialize_default(arg_def.default),
                     "metavar": arg_def.metavar if isinstance(arg_def.metavar, str) else None,
-                    "is_bool": arg_type is not None and getattr(arg_type, "__name__", "") == "bool",
+                    "is_bool": False,
                 }
             )
 
@@ -341,8 +335,6 @@ def auto_detect_method(import_spec: Optional[str]) -> str:
         return "knack"
     except ImportError:
         pass
-    if import_spec:
-        return "argparse"
     return "argparse"
 
 
