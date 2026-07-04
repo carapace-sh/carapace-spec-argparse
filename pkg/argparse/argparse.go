@@ -190,7 +190,9 @@ func buildCommandTree(commands map[string]FlatCmd, groups map[string]GroupInfo) 
 			}
 			node = child
 		}
-		node.description = flat.Description
+		if flat.Description != "" {
+			node.description = flat.Description
+		}
 		node.flags = flat.Arguments
 	}
 

@@ -37,8 +37,6 @@ def _nargs_value(nargs) -> Optional[str]:
     """Normalize argparse nargs to a JSON-serializable value."""
     if nargs is None:
         return None
-    if isinstance(nargs, int):
-        return str(nargs)
     return str(nargs)
 
 
@@ -113,14 +111,11 @@ def _walk_parser(parser, path: str = "") -> Dict[str, Any]:
 
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
-            for choice_action in action._choices_actions:
-                name = choice_action.dest
-                subparser = action.choices.get(name)
-                if subparser is None:
-                    continue
+            help_lookup = {ca.dest: ca.help or "" for ca in action._choices_actions}
+            for name, subparser in action.choices.items():
                 sub_path = f"{path} {name}".strip()
                 sub_result = _walk_parser(subparser, sub_path)
-                sub_result["help"] = choice_action.help or ""
+                sub_result["help"] = help_lookup.get(name, "")
                 commands[name] = sub_result
         elif action.option_strings:
             flags.append(_action_to_argument(action))
@@ -319,7 +314,6 @@ def _get_cli_version(cli_name: str) -> str:
 
             cli = get_default_cli()
             return cli.version
-        import importlib
 
         mod = importlib.import_module(cli_name)
         return getattr(mod, "__version__", "")
