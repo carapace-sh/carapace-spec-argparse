@@ -187,7 +187,7 @@ def _flatten_commands(
                 "group": prefix.split()[0] if prefix else "",
             }
 
-    if prefix and node.get("flags"):
+    if node.get("flags"):
         if prefix not in commands:
             commands[prefix] = {
                 "description": node.get("help", node.get("description", "")),

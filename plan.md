@@ -155,7 +155,8 @@ The Python scraper outputs a standardized JSON schema regardless of the scraping
           "type": "str",
           "nargs": null,
           "default": null,
-          "metavar": null
+          "metavar": null,
+          "is_bool": false
         }
       ],
       "group": "vm"
@@ -209,6 +210,9 @@ The Python scraper outputs a standardized JSON schema regardless of the scraping
 | `type != bool` | `Flag.Value` | Takes argument if not bool |
 | `choices` | `Completion.Flag[name]` | Static completion values |
 | `nargs` (`*`, `+`, `-1`) | `Flag.Nargs = -1` | Variadic |
+| `nargs` (`?`) | `Flag.Optarg`, `Flag.Value` | Optional argument |
+| `nargs` (int > 0) | `Flag.Nargs` | Exact argument count |
+| `default` | `Flag.Default` | Stringified; bool flags excluded |
 
 ## Implementation Steps
 

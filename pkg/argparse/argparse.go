@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/carapace-sh/carapace-spec/pkg/command"
@@ -96,6 +97,13 @@ func (a Argument) ToFlag() command.Flag {
 	switch a.Nargs {
 	case "*", "+", "-1":
 		f.Nargs = -1
+	case "?":
+		f.Optarg = true
+		f.Value = true
+	default:
+		if n, err := strconv.Atoi(a.Nargs); err == nil && n > 0 {
+			f.Nargs = n
+		}
 	}
 
 	if a.Default != nil && !a.IsBool {
@@ -166,6 +174,9 @@ func buildCommandTree(commands map[string]FlatCmd, groups map[string]GroupInfo) 
 	}
 
 	for name, flat := range commands {
+		if name == "" {
+			continue
+		}
 		parts := strings.Split(name, " ")
 		node := root
 		for _, part := range parts {

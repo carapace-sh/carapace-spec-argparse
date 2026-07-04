@@ -40,7 +40,7 @@ Reusable Go types matching the JSON schema:
 
 - `Spec` — top-level: `Cli`, `Commands` (flat dict), `Groups`
 - `FlatCmd` — single command with `Description`, `Arguments`, `Group`
-- `Argument` — flag metadata: `Options`, `Help`, `Required`, `Choices`, `Type`, `Nargs`, `IsBool`
+- `Argument` — flag metadata: `Options`, `Help`, `Required`, `Choices`, `Type`, `Nargs`, `Default`, `IsBool`
 - `GroupInfo` — group with `Help` and nested `Groups`
 
 `Spec.ToSpecCommand()` converts the flat command dict into a nested `command.Command` tree by splitting keys on spaces. Uses the `sentences` tokenizer for first-sentence extraction from help text.
@@ -79,6 +79,8 @@ Reusable Go types matching the JSON schema:
 | `is_bool != true` | `Flag.Value` | Takes argument if not bool |
 | `choices` | `Completion.Flag[name]` | Static completion values |
 | `nargs` (`*`, `+`, `-1`) | `Flag.Nargs = -1` | Variadic |
+| `nargs` (`?`) | `Flag.Optarg`, `Flag.Value` | Optional argument |
+| `nargs` (int > 0) | `Flag.Nargs` | Exact argument count |
 | `default` | `Flag.Default` | Stringified; bool flags excluded (common `False` default would add noise) |
 
 ## Build & Test
