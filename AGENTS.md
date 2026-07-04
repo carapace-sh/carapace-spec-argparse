@@ -79,6 +79,7 @@ Reusable Go types matching the JSON schema:
 | `is_bool != true` | `Flag.Value` | Takes argument if not bool |
 | `choices` | `Completion.Flag[name]` | Static completion values |
 | `nargs` (`*`, `+`, `-1`) | `Flag.Nargs = -1` | Variadic |
+| `default` | `Flag.Default` | Stringified; bool flags excluded (common `False` default would add noise) |
 
 ## Build & Test
 

@@ -6,6 +6,7 @@ package argparse
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -95,6 +96,10 @@ func (a Argument) ToFlag() command.Flag {
 	switch a.Nargs {
 	case "*", "+", "-1":
 		f.Nargs = -1
+	}
+
+	if a.Default != nil && !a.IsBool {
+		f.Default = fmt.Sprint(a.Default)
 	}
 
 	return f
